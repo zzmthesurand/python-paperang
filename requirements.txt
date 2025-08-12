@@ -6,3 +6,7 @@ scipy
 numba
 pilkit
 watchgod
+Pillow
+lxml
+cairosvg
+qrcode

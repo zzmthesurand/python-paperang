@@ -34,6 +34,7 @@ def im2binimage(im, conversion="threshold"):
     if (len(im.shape) != 2):
         im = ski.color.rgb2gray(im)
     im = ski.transform.resize(im, (round( fixed_width /im.shape[1]  * im.shape[0]), fixed_width))
+    im = ski.img_as_float(im)  # convert to float in range [0, 1]
     if conversion == "threshold":
         ret = (im < ski.filters.threshold_li(im)).astype(int)
     elif conversion == "edge":
@@ -45,7 +46,7 @@ def im2binimage(im, conversion="threshold"):
 # this is straight from https://github.com/tgray/hyperdither
 @numba.jit
 def dither(num, thresh = 127):
-    derr = np.zeros(num.shape, dtype=int)
+    derr = np.zeros(num.shape, dtype=np.int32)
 
     div = 8
     for y in range(num.shape[0]):
@@ -70,17 +71,17 @@ def dither(num, thresh = 127):
                     derr[y + 1, x + 1] += errval / div
     return num[::-1,:] * 255
 
-def im2binimage2(im):
+def im2binimage2(im, rotation=0):
     basewidth = 384
     # resizer = pilkit.processors.ResizeToFit(fixed_width)
     # import in B&W, probably does not matter
-    img = Image.open(im).convert('L')
+    img = Image.open(im).convert('L').rotate(rotation)
     # img = Image.open(im)
     # img.show()
     
     wpercent = (basewidth/float(img.size[0]))
     hsize = int((float(img.size[1])*float(wpercent)))
-    img = img.resize((basewidth,hsize), Image.ANTIALIAS)
+    img = img.resize((basewidth,hsize), Image.Resampling.LANCZOS)
     # img.save('test.pgm', format="PPM")
     # os.system('pamditherbw -atkinson test.pgm > test2.pgm')
     # os.system('pamtopnm <test2.pgm >test3.pbm')
@@ -99,22 +100,21 @@ def im2binimage2(im):
     # o = Image.fromstring('L', img.size, s)
 
     m = np.array(img)[:,:]
-    m2 = dither(m)
+    m2 = dither(m).astype(np.uint8)
     # out = Image.fromarray(m2[::-1,:]).convert('1')
     out = Image.fromarray(m2[::-1,:])
-    out.show()
+    #out.show()
     # the ditherer is stupid and does not make black and white images, just... almost so this fixes that
     enhancer = ImageEnhance.Contrast(out)
     enhanced_img = enhancer.enhance(4.0)
-    enhanced_img.show()
+    #enhanced_img.show()
     # now convert it to true black and white
     # blackandwhite_img = enhanced_img.convert('1')
     # blackandwhite_img.show()
     np_img = np.array(enhanced_img).astype(int)
     # flipping the ones and zeros
-    np_img[np_img == 1] = 100
     np_img[np_img == 0] = 1
-    np_img[np_img == 100] = 0
+    np_img[np_img == 255] = 0
 
     return binimage2bitstream(np_img)
 

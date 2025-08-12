@@ -104,3 +104,6 @@ ENV/
 .idea
 
 config.py
+*.png
+*.bmp
+*.jpg

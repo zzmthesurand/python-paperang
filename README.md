@@ -9,6 +9,23 @@ Required debian packages: `libbluetooth-dev libhidapi-dev libatlas-base-dev pyth
 
 Python Modules: install with `pip3 install -r requirements.txt`
 
+### Windows instructions
+You'll need python3 installed; check if you have it by typing `python` in your terminal.
+
+1. Install necessary python modules:
+```sh
+pip install -r requirements.txt
+```
+2. Ensure bluetooth is enabled on your computer. You do *not* need to connect your Paperang to your computer yet! We'll do that later, via the command line.
+3. Turn on your Paperang and set it near your computer
+4. Run the test script, which will tell your Paperang to print a self-test if it's successful:
+```sh
+python testprint.py
+```
+If you've never paired your Paperang with your computer, you might get a dialog asking you to allow the Paperang to pair with your system. Click `connect`. You should only have to do this once.
+
+5. If the test print was successful, the script will print out your device's MAC address on the console, as well as on the printer. You can enter that into the script to connect to your Paperang directly, avoiding the wait time for scanning for printers. Alternatively, you can create a config.py based on the config.template.py file. Set the `macaddress` variable to the MAC address of your printer.
+
 ### macOS instructions
 
 #### Set up and test your printer
@@ -55,55 +72,58 @@ mmj.sendImageToBt(img)
 mmj.disconnect()
 ```
 
-### 其他杂项
+**NOTE: ** All text below comes from the original repo, translated from Chinese to English.
 
-`registerCrcKeyToBt(key=123456)` 更改通信CRC32 KEY(不太懂这么做是为了啥,讲道理监听到这个包就能拿到key的)
+### Other Miscellaneous
 
-`sendPaperTypeToBt(paperType=0)` 更改纸张类型(疯狂卖纸呢)
+`registerCrcKeyToBt(key=123456)` Change the communication CRC32 KEY (Not too sure what the point of this is; logically, if you can intercept this packet, you can already obtain the key).
 
-`sendPowerOffTimeToBt(poweroff_time=0)` 更改自动关机时间
+`sendPaperTypeToBt(paperType=0)` Change the paper type (Really pushing paper sales here).
 
-`sendSelfTestToBt()` 打印自检页面
+`sendPowerOffTimeToBt(poweroff_time=0)` Change the automatic power-off time.
 
-`sendDensityToBt(density)` 设置打印密度
+`sendSelfTestToBt()` Print the self-test page.
 
-`sendFeedLineToBt(length)` 控制打印完后的padding
+`sendDensityToBt(density)` Set the print density.
 
-`queryBatteryStatus()` 查询剩余电量
+`sendFeedLineToBt(length)` Control the padding after printing.
 
-`queryDensity()` 查询打印密度
+`queryBatteryStatus()` Query the remaining battery level.
 
-`sendFeedToHeadLineToBt(length)` 不太懂和 `sendFeedLineToBt` 有什么区别，但是看起来都是在打印后调用的。
+`queryDensity()` Query the print density.
 
-`queryPowerOffTime()` 查询自动关机时间
+`sendFeedToHeadLineToBt(length)` Not quite sure what the difference is from `sendFeedLineToBt`, but it seems both are called after printing.
 
-`querySNFromBt()` 查询设备SN
+`queryPowerOffTime()` Query the automatic power-off time.
 
-其实还有挺多操作的，有兴趣的看着`const.py`猜一猜好了。
+`querySNFromBt()` Query the device serial number.
 
-### 图像工具
+There are actually quite a few more operations. If you’re interested, you can look at `const.py` and guess the rest yourself.
 
-`ImageConverter.image2bmp(path)` 任意图像到可供打印的二进制数据转换
- 
-`TextConverter.text2bmp(text)` 指定文字到可供打印的二进制数据转换
+### Image Tools
 
-### 微信公众平台工具
+`ImageConverter.image2bmp(path)` Convert any image into binary data suitable for printing.
 
-两个小脚本，用来实现发送图片给微信公众号后自动打印。
+`TextConverter.text2bmp(text)` Convert specified text into binary data suitable for printing.
 
-`wechat.php` 用于VPS接收腾讯数据，默认只允许指定用户打印。
+### WeChat Public Platform Tools
 
-`printer_server.py` 放置于树莓派等有蓝牙的靠近喵喵机的机器上运行，可以使用`tinc`等建立VPN以供VPS直接访问。
+Two small scripts to automatically print images sent to a WeChat public account.
 
-### 吐槽
+`wechat.php` Runs on a VPS to receive Tencent data, by default only allowing specific users to print.
 
-这玩意就不能增加一个多次打印的功能吗？以较低温度多次打印再走纸，应该可以实现打印灰度图的。
+`printer_server.py` Runs on a machine with Bluetooth (such as a Raspberry Pi) near the printer. You can use VPN tools like `tinc` so that the VPS can directly access it.
 
-逆了好久的固件也没搞出来啥东西，真是菜。希望有大佬能告诉我一点人生的经验。
+### Complaints
 
-顺便丢两个芯片型号: `NUC123LD4BN0`, `STM32F071CBU6`，似乎是Cortex-M0。
+Why can’t this thing just add a multi-pass printing function? Printing multiple times at a lower temperature and then feeding the paper should make grayscale image printing possible.
 
-PS: 本代码仅供非盈利用途，如用于商业用途请另请高明。
+I spent a long time trying to reverse-engineer the firmware but didn’t get anywhere. I’m just not skilled enough. Hopefully some expert can give me some life advice.
+
+By the way, here are two chip models: `NUC123LD4BN0`, `STM32F071CBU6` — seems to be Cortex-M0.
+
+PS: This code is for non-commercial use only. For commercial purposes, please consult someone more qualified.
+
 
 ### Acknowledgement 致谢
 Thanks for all the reverse engineering work done by the original author of this project.

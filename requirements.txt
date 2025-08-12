@@ -1,6 +1,6 @@
 cython
 numpy
-pybluez
+pybluez @ git+https://github.com/pybluez/pybluez.git#egg=pybluez
 scikit-image
 scipy
 numba

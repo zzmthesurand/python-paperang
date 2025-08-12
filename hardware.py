@@ -25,15 +25,21 @@ class Paperang:
             return False
         if not self.scanservices():
             return False
+        print("Connecting...")
         logging.info("Service found. Connecting to \"%s\" on %s..." % (self.service["name"], self.service["host"]))
         self.sock = BluetoothSocket(RFCOMM)
+        print("Connecting sock...")
         if system() == "Darwin":
             self.sock.connect((self.service["host"].decode('UTF-8'), self.service["port"]))
         else:
             self.sock.connect((self.service["host"], self.service["port"]))
-        self.sock.settimeout(60)
+
+        self.sock.settimeout(5)
         logging.info("Connected.")
-        self.registerCrcKeyToBt()
+        self.registerCrcKeyToBt() # Necessary
+        self.sendPaperTypeToBt(1)
+        self.sendDensityToBt(50)
+        self.sock.settimeout(60)
         return True
 
     def disconnect(self):
@@ -51,6 +57,7 @@ class Paperang:
         valid_devices = list(filter(lambda d: len(d) == 2 and d[1] in valid_names, nearby_devices))
         if len(valid_devices) == 0:
             logging.error("Cannot find device with name %s." % " or ".join(valid_names))
+            logging.error(nearby_devices)
             return False
         elif len(valid_devices) > 1:
             logging.warning("Found multiple valid machines, the first one will be used.\n")
@@ -79,12 +86,12 @@ class Paperang:
         #  'host': 'A1:B2:C3:D4:E5:F6'}
         service_matches = find_service(uuid=self.service_uuid, address=self.address)
         valid_service = list(filter(
-            lambda s: 'protocol' in s and 'name' in s and s['protocol'] == 'RFCOMM' and (s['name'] == 'SerialPort' or s['name'] == 'Port'),
+            lambda s: 'protocol' in s and 'name' in s and s['protocol'] == 'RFCOMM' and (s['name'] in (b'SerialPort',  b'Port', 'SerialPort', 'Port')),
             service_matches
         ))
-        print(valid_service[0])
         if len(valid_service) == 0:
             logging.error("Cannot find valid services on device with MAC %s." % self.address)
+            logging.error(service_matches)
             return False
         logging.info("Found a valid service")
         self.service = valid_service[0]
@@ -184,7 +191,7 @@ class Paperang:
         self.sendToBt(msg, BtCommandByte.PRT_SET_POWER_DOWN_TIME)
 
     def sendImageToBt(self, binary_img):
-        self.sendPaperTypeToBt()
+        #For some reason, printing an image after startup with PaperType = 0 causes the printer to not work.
         # msg = struct.pack("<%dc" % len(binary_img), *map(bytes, binary_img))
         msg = b"".join(map(lambda x: struct.pack("<c",x.to_bytes(1,byteorder="little")),binary_img))
         # print(msg)
@@ -209,7 +216,7 @@ class Paperang:
 
     def queryDensity(self):
         msg = struct.pack('<B', 1)
-        self.sendToBt(msg, BtCommandByte.PRT_GET_HEAT_DENSITY)
+        self.sendToBt(msg, BtCommandByte.PRT_GET_HEAT_DENSITY, need_reply=True)
 
     def sendFeedToHeadLineToBt(self, length):
         msg = struct.pack('<H', length)
